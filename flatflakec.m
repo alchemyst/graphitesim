@@ -19,7 +19,7 @@ makecross=false;%true;
 makecirchole=false;%true;
 % radius=20;
 
-cat=true;
+cat=false;
 catreacstep=1;
 catdist=10000;
 normreacT=0.1;
@@ -77,7 +77,7 @@ if makecirc
     for x=-msize/2:msize/2
         for y=-nsize/2:nsize/2
             if (x^2+y^2)>radius^2
-                if (x+msize/2~=0)&(y+nsize/2~=0)
+                if (x+msize/2~=0) && (y+nsize/2~=0)
                     flakem(x+msize/2,y+nsize/2)=0;
                 end;
             end;
@@ -105,15 +105,15 @@ if maketriangle
     for x=-msize/2:msize/2
         for y=-nsize/2:nsize/2
             if x>(2*y+500)
-                if (x+msize/2~=0)&(y+nsize/2~=0)
+                if (x+msize/2~=0) && (y+nsize/2~=0)
                     flakem(x+msize/2,y+nsize/2)=0;
                 end;
             elseif x>(-2*y+500)
-                 if (x+msize/2~=0)&(y+nsize/2~=0)
+                 if (x+msize/2~=0) && (y+nsize/2~=0)
                     flakem(x+msize/2,y+nsize/2)=0;
                 end;
-%             if x>(y+250)&x>(-y+250)
-%                 if (x+msize/2~=0)&(y+nsize/2~=0)
+%             if x>(y+250) && x>(-y+250)
+%                 if (x+msize/2~=0)&&(y+nsize/2~=0)
 %                     flakem(x+msize/2,y+nsize/2)=0;
 %                 end;
             end;
@@ -127,8 +127,8 @@ end;
 if makerevtriangle
     for x=1:nsize
         for y=1:msize
-            if ((x>(y-1900)/(-2))&(y>(-2*x+1900)))
-                if ((x<(y+100)/(2))&(y>(2*x-100)))
+            if ((x>(y-1900)/(-2))&&(y>(-2*x+1900)))
+                if ((x<(y+100)/(2))&&(y>(2*x-100)))
                     flakem(y,x)=0;
                 end;
             end;
@@ -151,7 +151,7 @@ end;
 flakem = uint8(flakem);
 flaket = flakem;
 
-%writeframe('flake', 0, 'dat', flakem)
+writeframe('flake', 0, 'dat', flakem)
 
 subcat=2*size(find(flakem==2),1);
 conv(1)=sum(sum(flakem))-subcat;
@@ -176,8 +176,9 @@ for i=1:iter
     end;
     %flakem = readframe('flake', i-1, 'dat', msize, nsize);
     flakem = flaket;
-
-    counters = conv2(flakem==0, opencross, 'same') .* (flakem==1);
+    
+    opensum = conv2(flakem==0, opencross, 'same');
+    counters = opensum .* (flakem==1);
     counts = histc(counters(:), 1:4)
 
     total(i)=sum(counts);
@@ -191,58 +192,61 @@ for i=1:iter
     %flaket=flakem;
     
     disp('Start loop2')
-    bigreactc = conv2(flakem==0, opencross, 'same');
     bigcat_att = conv2(flakem, circle, 'same');
     for j=3:msize-2
         for k=3:nsize-2
             neighbourhood = flakem(j-1:j+1, k-1:k+1);
             if flakem(j,k)==1
+                % We have a graphite particle
                 if flaket(j,k)~=2
-                    reactc = bigreactc(j, k);
+                    reactc = opensum(j, k);
                     react = min(1, 1-(1-reactivity)^reactc);
 
-                    if (rand<react)&(rem(i,normreact)==0)
-                        may_reac=0;
-                        cat_att=0;
-                        has_reac=0;
-                        is_cat=0;
-
+                    if (rand<react) && (rem(i,normreact)==0)
+                        may_reac = false;
+                        is_cat = false;
+                        % NOTE: We don't need to mask the center out here, as we know it is not 2
                         [cposi, cposj] = find(neighbourhood == 2);
                         for cati = 1:length(cposi)
+                            [joffset, koffset] = calcoffset(cposj, cposj, cati);
                             is_cat = true;
-                            cat_att = bigcat_att(j+cposi(cati)-1, k+cposj(cati)-1);
+                            cat_att = bigcat_att(j+joffset-1, k+koffset-1);
                             if cat_att > 1
                                 may_reac = true;
-                            elseif (cat_att==1) & ~has_reac
-                                flaket(j+cposi(cati)-1, k+cposj(cati)-1) = 0;
+                            elseif cat_att==1
+                                flaket(j+joffset-1, k+koffset-1) = 0;
                                 flaket(j, k) = 2;
-                                has_reac = true;
+                                break
                             end
                         end    
 
-                        if may_reac | ~is_cat
+                        if may_reac || ~is_cat
                             flaket(j,k)=0;
                         end;
                     end;
                 end;
-            elseif flakem(j,k)==2
+            elseif flakem(j,k)==2 % We have a catalyst particle
+                % Is it open?
                 catopen = any(neighbourhood(:) == 0);
 
-                if (rand<catreac)&(catopen)
+                if catopen && (rand<catreac)
+                    % Move to a random location where there is carbon
                     [possi, possj] = find(neighbourhood == 1);
                     if length(possi) > 0
                         choice = floor(rand*length(possi)) + 1;
+                        [joffset, koffset] = calcoffset(possi, possj, choice);
                         flaket(j, k) = 0;
-                        flaket(j+possi(choice)-1, k+possj(choice)-1) = 2;
+                        flaket(j+joffset, k+koffset) = 2;
                     end
                 end;
             end;
         end;
     end;
     disp('End loop2')
-    writeframe('flake', i, 'dat', flaket)
-
-    subcat=2*size(find(flakem==2),1);
+    
+    writeframe('flake', i, 'dat', flaket);
+    
+    subcat=2*sum(sum(flakem==2)); %2*size(find(flakem==2),1);
     conv(i+1)=sum(sum(flaket))-subcat;
     if conv(i+1)<=1
         break;
