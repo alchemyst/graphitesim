@@ -1,7 +1,8 @@
 function [conv,total,ASA,one,two,three,four,problog]=flatflakec
 
-cd('C:\MATLAB6p5\work\Data')
-iter=2000;%4000;
+rand('state', 0);
+
+iter=300;%4000;
 msize=504;%1004; THIS IS Y
 nsize=504;%1004; THIS IS X
 
@@ -282,77 +283,94 @@ if cat
     end;
 end;
 
-fid=fopen('flake0.m','w');
-fprintf(fid,'%2.0f',flakem);
-fclose(fid);
+flakem = uint8(flakem);
+flaket = flakem;
+
+%writeframe('flake', 0, 'dat', flakem)
+
 subcat=2*size(find(flakem==2),1);
 conv(1)=sum(sum(flakem))-subcat;
 
 % if cat
-% 	fid2=fopen('cat0.m','w');
-% 	fprintf(fid2,'%2.0f',flakec);
-% 	fclose(fid2);
+% 	writeframe('cat', 0, 'dat', flakec)
 % end;
-    h = waitbar(0,'The earth will end in:');
+% h = waitbar(0,'The earth will end in:');
 for i=1:iter
+    disp(['i=' num2str(i)]);
     if mod(i,catreacstep)==0
         normreac=normreacT;
     else
         normreac=0;
     end;
-	str1=['flake' num2str(i-1) '.m'];
-	fid1=fopen(str1);
-	flakem=fscanf(fid1,'%f',[msize nsize]);
-    fclose(fid1);
+    %flakem = readframe('flake', i-1, 'dat', msize, nsize);
+    flakem = flaket;
 
     one_count=0;
 	two_count=0;
 	three_count=0;
 	four_count=0;
+
+    disp('Start loop1')
     
-    for j=3:msize-2
-        for k=3:nsize-2
-            if flakem(j,k)==1
-                counter=0;
-                if flakem(j+1,k)==0
-                    counter=counter+1;
-                end;
-                if flakem(j-1,k)==0
-                    counter=counter+1;
-                end;
-                if flakem(j,k+1)==0
-                    counter=counter+1;
-                end;
-                if flakem(j,k-1)==0
-                    counter=counter+1;
-                end;
-                if counter==1
-                    one_count=one_count+1;
-                elseif counter==2
-                    two_count=two_count+1;
-                elseif counter==3
-                    three_count=three_count+1;
-                elseif counter==4
-                    four_count=four_count+1;
-                end;
-            end;
-        end;
-    end;
+
+    counters = conv2(flakem==0, [0 1 0; 1 0 1; 0 1 0], 'same') .* (flakem==1);
+    counts = histc(counters(:), 1:4)
+    one_count = counts(1);
+    two_count = counts(2);
+    three_count = counts(3);
+    four_count = counts(4);
+
+
+    # for j=3:msize-2
+    #     for k=3:nsize-2
+    #         if flakem(j,k)==1
+    #             counter=0;
+    #             if flakem(j+1,k)==0
+    #                 counter=counter+1;
+    #             end;
+    #             if flakem(j-1,k)==0
+    #                 counter=counter+1;
+    #             end;
+    #             if flakem(j,k+1)==0
+    #                 counter=counter+1;
+    #             end;
+    #             if flakem(j,k-1)==0
+    #                 counter=counter+1;
+    #             end;
+    #             if counter==1
+    #                 one_count=one_count+1;
+    #             elseif counter==2
+    #                 two_count=two_count+1;
+    #             elseif counter==3
+    #                 three_count=three_count+1;
+    #             elseif counter==4
+    #                 four_count=four_count+1;
+    #             end;
+    #         end;
+    #     end;
+    # end;
+    disp('End loop1')
+
+    # one_count
+    # two_count
+    # three_count
+    # four_count
 
 	total(i)=one_count+two_count+three_count+four_count;
 	ASA(i)=one_count+2*two_count+3*three_count+4*four_count;
-	xone=one_count/total(i);
-	xtwo=two_count/total(i);
-	xthree=three_count/total(i);
-	xfour=four_count/total(i);
+	xone=one_count/total(i)
+	xtwo=two_count/total(i)
+	xthree=three_count/total(i)
+	xfour=four_count/total(i)
 	reactivity=normreac;%/(xone+2*xtwo+3*xthree+4*xfour);%normreac/(xone+2*xtwo+3*xthree+4*xfour);
     problog(i)=reactivity;
     one(i)=one_count;
     two(i)=two_count;
     three(i)=three_count;
     four(i)=four_count;
-    flaket=flakem;
+    #flaket=flakem;
     
+    disp('Start loop2')
     for j=3:msize-2
         for k=3:nsize-2
             if flakem(j,k)==1
@@ -577,17 +595,11 @@ for i=1:iter
     		end;
 		end;
 	end;
-
-	str1=['flake' num2str(i) '.m'];
-    fid1=fopen(str1,'w');
-    fprintf(fid1,'%2.0f',flaket);
-    fclose(fid1);
+	disp('End loop2')
+    writeframe('flake', i, 'dat', flaket)
 
 % 	if cat
-% 		str2=['cat' num2str(i) '.m'];
-%         fid2=fopen(str2,'w');
-%         fprintf(fid2,'%2.0f',flakec);
-%         fclose(fid2);
+% 	  writeframe('cat', i, 'dat', flakec)
 % 	end;
     
     subcat=2*size(find(flakem==2),1);
@@ -595,12 +607,13 @@ for i=1:iter
     if conv(i+1)<=1
         break;
     end;
-    close(h);
-    h = waitbar((conv(1)-conv(i))/conv(1),'The earth will end in:');
-%     check(i)=(conv(i)-conv(i+1))/total(i);
+    %close(h);
+    %h = waitbar((conv(1)-conv(i))/conv(1),'The earth will end in:');
+    disp (conv(1)-conv(i))/conv(1)
+    %     check(i)=(conv(i)-conv(i+1))/total(i);
 
 end;
-close(h);
+%close(h);
 conv=conv';
 total=total';
 ASA=ASA';
