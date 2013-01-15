@@ -20,7 +20,7 @@ makecross=false;%true;
 makecirchole=false;%true;
 % radius=20;
 
-cat=false;%true;
+cat=true;
 catreacstep=1;
 catdist=10000;
 % msize=1004;%5001;
@@ -215,14 +215,9 @@ if makerandhole
 % 	flakem(round(rand*msize*0.25)+600-10,round(rand*nsize*0.25)+200-10)=0;
 % 	flakem(round(rand*msize*0.25)+600-10,round(rand*nsize*0.25)+700-10)=0;
 % 	flakem(round(rand*msize*0.25)+100-10,round(rand*nsize*0.25)+700-10)=0;
-	flakem(round(rand*msize),round(rand*nsize))=0;
-	flakem(round(rand*msize),round(rand*nsize))=0;
-	flakem(round(rand*msize),round(rand*nsize))=0;
-	flakem(round(rand*msize),round(rand*nsize))=0;
-	flakem(round(rand*msize),round(rand*nsize))=0;
-	flakem(round(rand*msize),round(rand*nsize))=0;
-	flakem(round(rand*msize),round(rand*nsize))=0;
-	flakem(round(rand*msize),round(rand*nsize))=0;
+    for i = 1:8
+        flakem(round(rand*msize),round(rand*nsize))=0;
+    end
 end;
 
 if maketriangle
@@ -291,6 +286,13 @@ flaket = flakem;
 subcat=2*size(find(flakem==2),1);
 conv(1)=sum(sum(flakem))-subcat;
 
+% Stencils
+opencross = [0 1 0; 
+             1 0 1; 
+             0 1 0];
+circle = ones(3); circle(2, 2) = 0;
+
+
 % if cat
 % 	writeframe('cat', 0, 'dat', flakec)
 % end;
@@ -305,313 +307,330 @@ for i=1:iter
     %flakem = readframe('flake', i-1, 'dat', msize, nsize);
     flakem = flaket;
 
-    one_count=0;
-	two_count=0;
-	three_count=0;
-	four_count=0;
 
     disp('Start loop1')
     
-
-    counters = conv2(flakem==0, [0 1 0; 1 0 1; 0 1 0], 'same') .* (flakem==1);
+    counters = conv2(flakem==0, opencross, 'same') .* (flakem==1);
     counts = histc(counters(:), 1:4)
     one_count = counts(1);
     two_count = counts(2);
     three_count = counts(3);
     four_count = counts(4);
 
-
-    # for j=3:msize-2
-    #     for k=3:nsize-2
-    #         if flakem(j,k)==1
-    #             counter=0;
-    #             if flakem(j+1,k)==0
-    #                 counter=counter+1;
-    #             end;
-    #             if flakem(j-1,k)==0
-    #                 counter=counter+1;
-    #             end;
-    #             if flakem(j,k+1)==0
-    #                 counter=counter+1;
-    #             end;
-    #             if flakem(j,k-1)==0
-    #                 counter=counter+1;
-    #             end;
-    #             if counter==1
-    #                 one_count=one_count+1;
-    #             elseif counter==2
-    #                 two_count=two_count+1;
-    #             elseif counter==3
-    #                 three_count=three_count+1;
-    #             elseif counter==4
-    #                 four_count=four_count+1;
-    #             end;
-    #         end;
-    #     end;
-    # end;
+    % one_count=0;
+    % two_count=0;
+    % three_count=0;
+    % four_count=0;
+    % for j=3:msize-2
+    %     for k=3:nsize-2
+    %         if flakem(j,k)==1
+    %             counter=0;
+    %             if flakem(j+1,k)==0
+    %                 counter=counter+1;
+    %             end;
+    %             if flakem(j-1,k)==0
+    %                 counter=counter+1;
+    %             end;
+    %             if flakem(j,k+1)==0
+    %                 counter=counter+1;
+    %             end;
+    %             if flakem(j,k-1)==0
+    %                 counter=counter+1;
+    %             end;
+    %             if counter==1
+    %                 one_count=one_count+1;
+    %             elseif counter==2
+    %                 two_count=two_count+1;
+    %             elseif counter==3
+    %                 three_count=three_count+1;
+    %             elseif counter==4
+    %                 four_count=four_count+1;
+    %             end;
+    %         end;
+    %     end;
+    % end;
     disp('End loop1')
 
-    # one_count
-    # two_count
-    # three_count
-    # four_count
+    % one_count
+    % two_count
+    % three_count
+    % four_count
 
-	total(i)=one_count+two_count+three_count+four_count;
-	ASA(i)=one_count+2*two_count+3*three_count+4*four_count;
-	xone=one_count/total(i)
-	xtwo=two_count/total(i)
-	xthree=three_count/total(i)
-	xfour=four_count/total(i)
-	reactivity=normreac;%/(xone+2*xtwo+3*xthree+4*xfour);%normreac/(xone+2*xtwo+3*xthree+4*xfour);
+    total(i)=one_count+two_count+three_count+four_count;
+    ASA(i)=one_count+2*two_count+3*three_count+4*four_count;
+    xone=one_count/total(i)
+    xtwo=two_count/total(i)
+    xthree=three_count/total(i)
+    xfour=four_count/total(i)
+    reactivity=normreac;%/(xone+2*xtwo+3*xthree+4*xfour);%normreac/(xone+2*xtwo+3*xthree+4*xfour);
     problog(i)=reactivity;
     one(i)=one_count;
     two(i)=two_count;
     three(i)=three_count;
     four(i)=four_count;
-    #flaket=flakem;
+    %flaket=flakem;
     
     disp('Start loop2')
+    bigreactc = conv2(flakem==0, opencross, 'same');
+    bigcat_att = conv2(flakem, circle, 'same');
     for j=3:msize-2
         for k=3:nsize-2
+            neighbourhood = flakem(j-1:j+1, k-1:k+1);
             if flakem(j,k)==1
                 if flaket(j,k)~=2
-					react=0;
-                    reactc=0;
-					if flakem(j+1,k)==0
-                        reactc=reactc+1;
-					end;
-					if flakem(j-1,k)==0
-                        reactc=reactc+1;
-					end;
-					if flakem(j,k+1)==0
-                        reactc=reactc+1;
-					end;
-					if flakem(j,k-1)==0
-                        reactc=reactc+1;
-					end;
-%                    react=(reactivity)*reactc;
-                    react=1-(1-reactivity)^reactc;
-                     if react>1
-                         react=1;
-                     end;
-					if (rand<react)&(rem(i,normreact)==0)
+                    reactc = bigreactc(j, k);
+                    % reactc=0;
+                    % if flakem(j+1,k)==0
+                    %     reactc=reactc+1;
+                    % end;
+                    % if flakem(j-1,k)==0
+                    %     reactc=reactc+1;
+                    % end;
+                    % if flakem(j,k+1)==0
+                    %     reactc=reactc+1;
+                    % end;
+                    % if flakem(j,k-1)==0
+                    %     reactc=reactc+1;
+                    % end;
+                    % react=(reactivity)*reactc;
+                    react = min(1, 1-(1-reactivity)^reactc);
+                    % if react>1
+                    %     react=1;
+                    % end;
+                    if (rand<react)&(rem(i,normreact)==0)
                         may_reac=0;
                         cat_att=0;
                         has_reac=0;
                         is_cat=0;
-                        if flakem(j+1,k)==2
-                            is_cat=1;
-                            cat_att=flakem(j+2,k)+flakem(j+2,k+1)+flakem(j+2,k-1)+flakem(j+1,k+1)+flakem(j+1,k-1)+flakem(j,k)+flakem(j,k+1)+flakem(j,k-1);
-                            if cat_att>1
-                                may_reac=1;
-                            elseif (cat_att==1)&(~has_reac)
-                                flaket(j+1,k)=0;                                
-                                flaket(j,k)=2;
-                                has_reac=1;
-                            end;
-                        end;
-                        if flakem(j-1,k)==2
-                            is_cat=1;
-                            cat_att=flakem(j-2,k)+flakem(j-2,k+1)+flakem(j-2,k-1)+flakem(j-1,k+1)+flakem(j-1,k-1)+flakem(j,k)+flakem(j,k+1)+flakem(j,k-1);
-                            if cat_att>1
-                                may_reac=1;
-                            elseif (cat_att==1)&(~has_reac)
-                                flaket(j-1,k)=0;                                
-                                flaket(j,k)=2;
-                                has_reac=1;
-                            end;
-                        end;
-                        if flakem(j,k+1)==2
-                            is_cat=1;
-                            cat_att=flakem(j+1,k+2)+flakem(j,k+2)+flakem(j-1,k+2)+flakem(j+1,k+1)+flakem(j-1,k+1)+flakem(j+1,k)+flakem(j,k)+flakem(j-1,k);
-                            if cat_att>1
-                                may_reac=1;
-                            elseif (cat_att==1)&(~has_reac)
-                                flaket(j,k+1)=0;                                
-                                flaket(j,k)=2;
-                                has_reac=1;
-                            end;
-                        end;
-                        if flakem(j,k-1)==2
-                            is_cat=1;
-                            cat_att=flakem(j+1,k-2)+flakem(j,k-2)+flakem(j-1,k-2)+flakem(j+1,k-1)+flakem(j-1,k-1)+flakem(j+1,k)+flakem(j,k)+flakem(j-1,k);
-                            if cat_att>1
-                                may_reac=1;
-                            elseif (cat_att==1)&(~has_reac)
-                                flaket(j,k-1)=0;                                
-                                flaket(j,k)=2;
-                                has_reac=1;
-                            end;
-                        end;
-                        if flakem(j+1,k+1)==2
-                            is_cat=1;
-                            cat_att=flakem(j+2,k+2)+flakem(j+2,k+1)+flakem(j+2,k)+flakem(j+1,k+2)+flakem(j+1,k)+flakem(j,k+2)+flakem(j,k+1)+flakem(j,k);
-                            if cat_att>1
-                                may_reac=1;
-                            elseif (cat_att==1)&(~has_reac)
-                                flaket(j+1,k+1)=0;                                
-                                flaket(j,k)=2;
-                                has_reac=1;
-                            end;
-                        end;
-                        if flakem(j-1,k-1)==2
-                            is_cat=1;
-                            cat_att=flakem(j,k)+flakem(j,k-1)+flakem(j,k-2)+flakem(j-1,k)+flakem(j-1,k-2)+flakem(j-2,k)+flakem(j-2,k-1)+flakem(j-2,k-2);
-                            if cat_att>1
-                                may_reac=1;
-                            elseif (cat_att==1)&(~has_reac)
-                                flaket(j-1,k-1)=0;                                
-                                flaket(j,k)=2;
-                                has_reac=1;
-                            end;
-                        end;
-                        if flakem(j-1,k+1)==2
-                            is_cat=1;
-                            cat_att=flakem(j,k+2)+flakem(j,k+1)+flakem(j,k)+flakem(j-1,k+2)+flakem(j-1,k)+flakem(j-2,k+2)+flakem(j-2,k+1)+flakem(j-2,k);
-                            if cat_att>1
-                                may_reac=1;
-                            elseif (cat_att==1)&(~has_reac)
-                                flaket(j-1,k+1)=0;                                
-                                flaket(j,k)=2;
-                                has_reac=1;
-                            end;
-                        end;
-                        if flakem(j+1,k-1)==2
-                            is_cat=1;
-                            cat_att=flakem(j+2,k)+flakem(j+2,k-1)+flakem(j+2,k-2)+flakem(j+1,k)+flakem(j+1,k-2)+flakem(j,k)+flakem(j,k-1)+flakem(j,k-2);
-                            if cat_att>1
-                                may_reac=1;
-                            elseif (cat_att==1)&(~has_reac)
-                                flaket(j+1,k-1)=0;                                
-                                flaket(j,k)=2;
-                                has_reac=1;
-                            end;
-                        end;
-                        if may_reac==1
+
+                        [cposi, cposj] = find(neighbourhood == 2);
+                        for cati = 1:length(cposi)
+                            is_cat = true;
+                            cat_att = bigcat_att(j+cposi(cati)-1, k+cposj(cati)-1);
+                            if cat_att > 1
+                                may_reac = true;
+                            elseif (cat_att==1) & ~has_reac
+                                flaket(j+cposi(cati)-1, k+cposj(cati)-1) = 0;
+                                flaket(j, k) = 2;
+                                has_reac = true;
+                            end
+                        end    
+
+                        % if flakem(j+1,k)==2
+                        %     is_cat=1;
+                        %     cat_att=flakem(j+2,k)+flakem(j+2,k+1)+flakem(j+2,k-1)+flakem(j+1,k+1)+flakem(j+1,k-1)+flakem(j,k)+flakem(j,k+1)+flakem(j,k-1);
+                        %     if cat_att>1
+                        %         may_reac=1;
+                        %     elseif (cat_att==1)&(~has_reac)
+                        %         flaket(j+1,k)=0;                                
+                        %         flaket(j,k)=2;
+                        %         has_reac=1;
+                        %     end;
+                        % end;
+                        % if flakem(j-1,k)==2
+                        %     is_cat=1;
+                        %     cat_att=flakem(j-2,k)+flakem(j-2,k+1)+flakem(j-2,k-1)+flakem(j-1,k+1)+flakem(j-1,k-1)+flakem(j,k)+flakem(j,k+1)+flakem(j,k-1);
+                        %     if cat_att>1
+                        %         may_reac=1;
+                        %     elseif (cat_att==1)&(~has_reac)
+                        %         flaket(j-1,k)=0;                                
+                        %         flaket(j,k)=2;
+                        %         has_reac=1;
+                        %     end;
+                        % end;
+                        % if flakem(j,k+1)==2
+                        %     is_cat=1;
+                        %     cat_att=flakem(j+1,k+2)+flakem(j,k+2)+flakem(j-1,k+2)+flakem(j+1,k+1)+flakem(j-1,k+1)+flakem(j+1,k)+flakem(j,k)+flakem(j-1,k);
+                        %     if cat_att>1
+                        %         may_reac=1;
+                        %     elseif (cat_att==1)&(~has_reac)
+                        %         flaket(j,k+1)=0;                                
+                        %         flaket(j,k)=2;
+                        %         has_reac=1;
+                        %     end;
+                        % end;
+                        % if flakem(j,k-1)==2
+                        %     is_cat=1;
+                        %     cat_att=flakem(j+1,k-2)+flakem(j,k-2)+flakem(j-1,k-2)+flakem(j+1,k-1)+flakem(j-1,k-1)+flakem(j+1,k)+flakem(j,k)+flakem(j-1,k);
+                        %     if cat_att>1
+                        %         may_reac=1;
+                        %     elseif (cat_att==1)&(~has_reac)
+                        %         flaket(j,k-1)=0;                                
+                        %         flaket(j,k)=2;
+                        %         has_reac=1;
+                        %     end;
+                        % end;
+                        % if flakem(j+1,k+1)==2
+                        %     is_cat=1;
+                        %     cat_att=flakem(j+2,k+2)+flakem(j+2,k+1)+flakem(j+2,k)+flakem(j+1,k+2)+flakem(j+1,k)+flakem(j,k+2)+flakem(j,k+1)+flakem(j,k);
+                        %     if cat_att>1
+                        %         may_reac=1;
+                        %     elseif (cat_att==1)&(~has_reac)
+                        %         flaket(j+1,k+1)=0;                                
+                        %         flaket(j,k)=2;
+                        %         has_reac=1;
+                        %     end;
+                        % end;
+                        % if flakem(j-1,k-1)==2
+                        %     is_cat=1;
+                        %     cat_att=flakem(j,k)+flakem(j,k-1)+flakem(j,k-2)+flakem(j-1,k)+flakem(j-1,k-2)+flakem(j-2,k)+flakem(j-2,k-1)+flakem(j-2,k-2);
+                        %     if cat_att>1
+                        %         may_reac=1;
+                        %     elseif (cat_att==1)&(~has_reac)
+                        %         flaket(j-1,k-1)=0;                                
+                        %         flaket(j,k)=2;
+                        %         has_reac=1;
+                        %     end;
+                        % end;
+                        % if flakem(j-1,k+1)==2
+                        %     is_cat=1;
+                        %     cat_att=flakem(j,k+2)+flakem(j,k+1)+flakem(j,k)+flakem(j-1,k+2)+flakem(j-1,k)+flakem(j-2,k+2)+flakem(j-2,k+1)+flakem(j-2,k);
+                        %     if cat_att>1
+                        %         may_reac=1;
+                        %     elseif (cat_att==1)&(~has_reac)
+                        %         flaket(j-1,k+1)=0;                                
+                        %         flaket(j,k)=2;
+                        %         has_reac=1;
+                        %     end;
+                        % end;
+                        % if flakem(j+1,k-1)==2
+                        %     is_cat=1;
+                        %     cat_att=flakem(j+2,k)+flakem(j+2,k-1)+flakem(j+2,k-2)+flakem(j+1,k)+flakem(j+1,k-2)+flakem(j,k)+flakem(j,k-1)+flakem(j,k-2);
+                        %     if cat_att>1
+                        %         may_reac=1;
+                        %     elseif (cat_att==1)&(~has_reac)
+                        %         flaket(j+1,k-1)=0;                                
+                        %         flaket(j,k)=2;
+                        %         has_reac=1;
+                        %     end;
+                        % end;
+                        if may_reac | ~is_cat
                             flaket(j,k)=0;
                         end;
-                        if is_cat==0
-                            flaket(j,k)=0;
                         end;
                     end;
-				end;
             elseif flakem(j,k)==2
-                catopen=false;
-                if flakem(j+1,k)==0
-                    catopen=true;
-                end;
-                if flakem(j-1,k)==0
-                    catopen=true;
-                end;
-                if flakem(j,k+1)==0
-                    catopen=true;
-                end;
-                if flakem(j,k-1)==0
-                    catopen=true;
-                end;
-                if flakem(j+1,k+1)==0
-                    catopen=true;
-                end;
-                if flakem(j-1,k-1)==0
-                    catopen=true;
-                end;
-                if flakem(j-1,k+1)==0
-                    catopen=true;
-                end;
-                if flakem(j+1,k-1)==0
-                    catopen=true;
-                end;
-				if (rand<catreac)&(catopen)
-                    counter=0;
-                    dira(1:8)=0;
-                    if flakem(j+1,k)==1
-                        counter=counter+1;
-                        dira(1)=1;
-                    end;
-                    if flakem(j-1,k)==1
-                        counter=counter+1;
-                        dira(2)=1;
-                    end;
-                    if flakem(j,k+1)==1
-                        counter=counter+1;
-                        dira(3)=1;
-                    end;
-                    if flakem(j,k-1)==1
-                        counter=counter+1;
-                        dira(4)=1;
-                    end;
-                    if flakem(j+1,k+1)==1
-                        counter=counter+1;
-                        dira(5)=1;
-                    end;
-                    if flakem(j-1,k-1)==1
-                        counter=counter+1;
-                        dira(6)=1;
-                    end;
-                    if flakem(j-1,k+1)==1
-                        counter=counter+1;
-                        dira(7)=1;
-                    end;
-                    if flakem(j+1,k-1)==1
-                        counter=counter+1;
-                        dira(8)=1;
-                    end;
-                    dirgo=ceil(rand*counter);
-                    dirc=0;
-                    for cc=1:8
-                        if dira(cc)==1
-                            dirc=dirc+1;
-                            if dirc==dirgo
-                                switch cc
-                                    case 1
-                                        flaket(j,k)=0;
-                                        flaket(j+1,k)=2;
-                                    case 2
-                                        flaket(j,k)=0;
-                                        flaket(j-1,k)=2;
-                                    case 3
-                                        flaket(j,k)=0;
-                                        flaket(j,k+1)=2;
-                                    case 4
-                                        flaket(j,k)=0;
-                                        flaket(j,k-1)=2;
-                                    case 5
-                                        flaket(j,k)=0;
-                                        flaket(j+1,k+1)=2;
-                                    case 6
-                                        flaket(j,k)=0;
-                                        flaket(j-1,k-1)=2;
-                                    case 7
-                                        flaket(j,k)=0;
-                                        flaket(j-1,k+1)=2;
-                                    case 8
-                                        flaket(j,k)=0;
-                                        flaket(j+1,k-1)=2;
-                                end;
-                            end;
-                        end;
-                    end;
+                catopen = any(neighbourhood(:) == 0);
+                % catopen=false;
+                % if flakem(j+1,k)==0
+                %     catopen=true;
+                % end;
+                % if flakem(j-1,k)==0
+                %     catopen=true;
+                % end;
+                % if flakem(j,k+1)==0
+                %     catopen=true;
+                % end;
+                % if flakem(j,k-1)==0
+                %     catopen=true;
+                % end;
+                % if flakem(j+1,k+1)==0
+                %     catopen=true;
+                % end;
+                % if flakem(j-1,k-1)==0
+                %     catopen=true;
+                % end;
+                % if flakem(j-1,k+1)==0
+                %     catopen=true;
+                % end;
+                % if flakem(j+1,k-1)==0
+                %     catopen=true;
+                % end;
+                if (rand<catreac)&(catopen)
+                    [possi, possj] = find(neighbourhood == 1);
+                    choice = floor(rand*length(possi)) + 1;
+                    flaket(j, k) = 0;
+                    flaket(j+possi(choice)-1, k+possj(choice)-1) = 2;
+                    
+                %     counter=0;
+                %     dira(1:8)=0;
+                %     if flakem(j+1,k)==1
+                %         counter=counter+1;
+                %         dira(1)=1;
+                %     end;
+                %     if flakem(j-1,k)==1
+                %         counter=counter+1;
+                %         dira(2)=1;
+                %     end;
+                %     if flakem(j,k+1)==1
+                %         counter=counter+1;
+                %         dira(3)=1;
+                %     end;
+                %     if flakem(j,k-1)==1
+                %         counter=counter+1;
+                %         dira(4)=1;
+                %     end;
+                %     if flakem(j+1,k+1)==1
+                %         counter=counter+1;
+                %         dira(5)=1;
+                %     end;
+                %     if flakem(j-1,k-1)==1
+                %         counter=counter+1;
+                %         dira(6)=1;
+                %     end;
+                %     if flakem(j-1,k+1)==1
+                %         counter=counter+1;
+                %         dira(7)=1;
+                %     end;
+                %     if flakem(j+1,k-1)==1
+                %         counter=counter+1;
+                %         dira(8)=1;
+                %     end;
+                %     dirgo=ceil(rand*counter);
+                %     dirc=0;
+                %     for cc=1:8
+                %         if dira(cc)==1
+                %             dirc=dirc+1;
+                %             if dirc==dirgo
+                %                 switch cc
+                %                     case 1
+                %                         flaket(j,k)=0;
+                %                         flaket(j+1,k)=2;
+                %                     case 2
+                %                         flaket(j,k)=0;
+                %                         flaket(j-1,k)=2;
+                %                     case 3
+                %                         flaket(j,k)=0;
+                %                         flaket(j,k+1)=2;
+                %                     case 4
+                %                         flaket(j,k)=0;
+                %                         flaket(j,k-1)=2;
+                %                     case 5
+                %                         flaket(j,k)=0;
+                %                         flaket(j+1,k+1)=2;
+                %                     case 6
+                %                         flaket(j,k)=0;
+                %                         flaket(j-1,k-1)=2;
+                %                     case 7
+                %                         flaket(j,k)=0;
+                %                         flaket(j-1,k+1)=2;
+                %                     case 8
+                %                         flaket(j,k)=0;
+                %                         flaket(j+1,k-1)=2;
+                %                 end;
+                %             end;
+                %         end;
+                %     end;
                 end;
     		end;
-		end;
+            end;
 	end;
 	disp('End loop2')
-    writeframe('flake', i, 'dat', flaket)
+        writeframe('flake', i, 'dat', flaket)
 
-% 	if cat
-% 	  writeframe('cat', i, 'dat', flakec)
-% 	end;
+        % 	if cat
+        % 	  writeframe('cat', i, 'dat', flakec)
+        % 	end;
     
-    subcat=2*size(find(flakem==2),1);
-    conv(i+1)=sum(sum(flaket))-subcat;
-    if conv(i+1)<=1
-        break;
-    end;
-    %close(h);
-    %h = waitbar((conv(1)-conv(i))/conv(1),'The earth will end in:');
-    disp (conv(1)-conv(i))/conv(1)
-    %     check(i)=(conv(i)-conv(i+1))/total(i);
-
+        subcat=2*size(find(flakem==2),1);
+        conv(i+1)=sum(sum(flaket))-subcat;
+        if conv(i+1)<=1
+            break;
+        end;
+        %close(h);
+        %h = waitbar((conv(1)-conv(i))/conv(1),'The earth will end in:');
+        disp (conv(1)-conv(i))/conv(1)
+        %     check(i)=(conv(i)-conv(i+1))/total(i);
 end;
 %close(h);
 conv=conv';
