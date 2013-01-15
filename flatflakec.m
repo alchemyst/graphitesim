@@ -1,8 +1,9 @@
 function [conv,total,ASA,allcounts,problog]=flatflakec
 
 rand('state', 0);
+filestem = 'results/flake';
 
-iter=300;%4000;
+iter=2000;%4000;
 msize=504;%1004; THIS IS Y
 nsize=504;%1004; THIS IS X
 
@@ -151,7 +152,7 @@ end;
 flakem = uint8(flakem);
 flaket = flakem;
 
-writeframe('flake', 0, 'dat', flakem)
+writeframe(filestem, 0, 'dat', flakem)
 
 subcat=2*size(find(flakem==2),1);
 conv(1)=sum(sum(flakem))-subcat;
@@ -174,7 +175,7 @@ for i=1:iter
     else
         normreac=0;
     end;
-    %flakem = readframe('flake', i-1, 'dat', msize, nsize);
+    %flakem = readframe(filestem, i-1, 'dat', msize, nsize);
     flakem = flaket;
     
     opensum = conv2(flakem==0, opencross, 'same');
@@ -203,6 +204,7 @@ for i=1:iter
                     react = min(1, 1-(1-reactivity)^reactc);
 
                     if (rand<react) && (rem(i,normreact)==0)
+
                         may_reac = false;
                         is_cat = false;
                         % NOTE: We don't need to mask the center out here, as we know it is not 2
@@ -210,11 +212,11 @@ for i=1:iter
                         for cati = 1:length(cposi)
                             [joffset, koffset] = calcoffset(cposj, cposj, cati);
                             is_cat = true;
-                            cat_att = bigcat_att(j+joffset-1, k+koffset-1);
+                            cat_att = bigcat_att(j+joffset, k+koffset);
                             if cat_att > 1
                                 may_reac = true;
                             elseif cat_att==1
-                                flaket(j+joffset-1, k+koffset-1) = 0;
+                                flaket(j+joffset, k+koffset) = 0;
                                 flaket(j, k) = 2;
                                 break
                             end
@@ -244,7 +246,7 @@ for i=1:iter
     end;
     disp('End loop2')
     
-    writeframe('flake', i, 'dat', flaket);
+    writeframe(filestem, i, 'dat', flaket);
     
     subcat=2*sum(sum(flakem==2)); %2*size(find(flakem==2),1);
     conv(i+1)=sum(sum(flaket))-subcat;
