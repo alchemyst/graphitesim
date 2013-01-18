@@ -3,25 +3,28 @@
 import sys
 import numpy
 import matplotlib.pyplot as plt
+import h5py
 
-msize = 504
-nsize = 504
+# It is better (faster) to use h5topng if it is available:
+# h5topng frames.h5 -o frame.png -m 0 -M 2 -c hot -x 1:600
 
-def datafilename(stem, number, ext):
-    return "%s%04i.%s" % (stem, number, ext)
-
-def writeframe(stem, frame, ext, data):
-    numpy.savetxt(datafilename(stem, frame, ext), data, fmt="%i")
-
-def plotframe(plt, f):
-    front, ext = f.split('.')
-    d = numpy.loadtxt(f, dtype=numpy.uint8).reshape(msize, nsize)
-    plt.imshow(d)
+def plotframe(plt, frame, filename):
+    plt.imshow(frame)
     plt.axis('off')
-    plt.savefig(front + '_py.png')
+    plt.savefig(filename)
     plt.close()
 
+
 if __name__ == "__main__":
-    for f in sys.argv[1:]:
-        print f
-        plotframe(plt, f)
+    filename = sys.argv[1]
+    if sys.argv == 1:
+        frameformat = "frame%4i.png"
+    else:
+        frameformat = sys.argv[2]
+        
+    framefile = h5py.File(filename)
+    for i, frame in enumerate(framefile['frames']):
+        filename = frameformat % i
+        print filename
+        plotframe(plt, frame, filename)
+        
