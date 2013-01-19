@@ -17,7 +17,7 @@ def plotframe(plt, frame, filename):
 
 if __name__ == "__main__":
     filename = sys.argv[1]
-    if sys.argv == 1:
+    if len(sys.argv) == 2:
         frameformat = "frame%4i.png"
     else:
         frameformat = sys.argv[2]
