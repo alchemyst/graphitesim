@@ -5,14 +5,15 @@
 
 import numpy as np
 import scipy.signal
-import matplotlib.pyplot as plt
+import sumcalcs
 
-def conv2(in1, in2):
+def conv2d(in1, in2):
     return scipy.signal.convolve2d(in1, in2, 'same')
 
 writefile = True
 plot = True
 catalyst = True
+printstats = False
 
 datatype = "uint8"
 
@@ -26,6 +27,13 @@ normreac = 0.1
 catprob = 4.0/100 # Probability of catalyst 10000/(504*504) 
 catreac = 1
 
+# Stencils
+opencross = np.array([[0, 1, 0],
+                      [1, 0, 1],
+                      [0, 1, 0]], datatype)
+circle = np.ones([3, 3], datatype)
+circle[1, 1] = 0
+
 # Initialise shape
 flakem = np.zeros([msize, nsize], datatype)
 flakem[2:-2, 2:-2] = 1
@@ -33,22 +41,17 @@ flakem[50, 50:450] = 0
 flakem[450, 50:450] = 0
 flakem[100:400, 250] = 0
 
+graphite = flakem == 1
+
 if catalyst:
     # Seed catalyst
     # Using 9 for the catalyst allows us to use only one convolution to find the sum of graphite particles and the number of catalyst neighbours
-    flakem[(np.random.rand(msize, nsize) < catprob)
-           & (flakem==1)] = 9 
+    randoms = np.random.rand(msize, nsize)
+    flakem[(randoms < catprob) & graphite] = 9 
 
 flaket = np.copy(flakem)
 
-actives = [(flakem==1).sum()]
-
-# Stencils
-opencross = np.array([[0, 1, 0], 
-                      [1, 0, 1], 
-                      [0, 1, 0]], datatype)
-circle = np.ones([3, 3], datatype)
-circle[1, 1] = 0
+actives = [graphite.sum()]
 
 # Histories
 total = []
@@ -57,9 +60,10 @@ problog = []
 allcounts = []
 xs = []
 
-countvec = range(1,6)
+countvec = range(1, 6)
 
 if plot:
+    import matplotlib.pyplot as plt
     plt.ion()
     plt.subplot(2, 1, 1)
     im = plt.imshow(flakem)
@@ -80,8 +84,10 @@ if writefile:
 for i in xrange(maxiter):
     flakem = np.copy(flaket)
     
-    opensum = conv2(flakem==0, opencross)
-    counters = opensum * (flakem==1)
+    #opensum = conv2d(flakem==0, opencross)
+    opensum = sumcalcs.opencross(flakem==0)
+    graphite = flakem == 1
+    counters = opensum * graphite
     counts,_ = np.histogram(counters, countvec)
 
     total.append(counts.sum())
@@ -95,26 +101,27 @@ for i in xrange(maxiter):
     randoms = np.random.rand(msize, nsize)
     # Figure out which graphite particles will react
     reactc = opensum
-    reactprob = np.minimum(1, 1-(1-reactivity)**reactc)
+    reactprob = np.minimum(1, 1 - (1 - reactivity)**reactc)
     willreact = randoms < reactprob
-    flaket[willreact & (flakem==1)] = 0
+    flaket[willreact & graphite] = 0
 
     if catalyst:
-        closedsum = conv2(flakem, circle)
+        #closedsum = conv2d(flakem, circle)
+        closedsum = sumcalcs.circle(flakem)
         catopen = (1 <= closedsum) & (closedsum <= 7) & (flakem == 9)
         for r, c in zip(*np.nonzero(catopen & (randoms < catreac))):
             if 1 < r < nsize and 1 < c < msize:
                 whichone = np.random.randint(closedsum[r, c])
-                neighbourhood = flakem[r-1:r+2, c-1:c+2]
-                roffset, coffset = zip(*np.nonzero(neighbourhood==1))[whichone]
+                neighbourhood = graphite[r-1:r+2, c-1:c+2]
+                roffset, coffset = zip(*np.nonzero(neighbourhood))[whichone]
                 flaket[r, c] = 0
                 flaket[r+roffset-1, c+coffset-1] = 9
         
     if writefile:
         framedata[i, :, :] = flaket
         framefile.flush()
-    
-    actives.append((flaket==1).sum())
+
+    actives.append((flaket == 1).sum())
     if actives[-1] <= 1:
         break
 
@@ -122,7 +129,7 @@ for i in xrange(maxiter):
         im.set_data(flaket)
         activeline.set_data(np.arange(i+2), actives)
         plt.draw()
-    else:
+    if printstats:
         print 'i =', i
         print counts
         print 'Conversion:', (actives[0] - actives[-1])/float(actives[0])
