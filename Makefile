@@ -5,7 +5,7 @@ frames.h5: flatflakec.py
 	python $<
 
 animation.gif: frames.h5
-	python render.py $< "results/frame%04i.png"
+	which h5topng && ( cd results; h5topng ../frames.h5 -o frame.png -m 0 -M 9 -c hot -x 1:600 ) || python render.py $< "results/frame%04i.png"
 	convert results/frame*.png $@
 
 clean:
