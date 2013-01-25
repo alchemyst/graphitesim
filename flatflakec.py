@@ -10,10 +10,11 @@ import sumcalcs
 def conv2d(in1, in2):
     return scipy.signal.convolve2d(in1, in2, 'same')
 
-writefile = True
-plot = True
-catalyst = True
+writefile = False
+plot = False
+catalyst = False
 printstats = False
+writeanimation = True
 
 datatype = "uint8"
 
@@ -80,12 +81,17 @@ if writefile:
                                          'uint8',
                                          compression='gzip',
                                          chunks=(1,msize,nsize))
+if writeanimation:
+    import cv, cv2
+    videowriter = cv2.VideoWriter('frames.avi', cv.FOURCC(*'rle '), 24,
+                                  (msize, nsize), True)
+    print videowriter
     
 for i in xrange(maxiter):
     flakem = np.copy(flaket)
     
-    #opensum = conv2d(flakem==0, opencross)
-    opensum = sumcalcs.opencross(flakem==0)
+    opensum = conv2d(flakem==0, opencross)
+    #opensum = sumcalcs.opencross(flakem==0)
     graphite = flakem == 1
     counters = opensum * graphite
     counts,_ = np.histogram(counters, countvec)
@@ -117,18 +123,23 @@ for i in xrange(maxiter):
                 flaket[r, c] = 0
                 flaket[r+roffset-1, c+coffset-1] = 9
         
-    if writefile:
-        framedata[i, :, :] = flaket
-        framefile.flush()
 
     actives.append((flaket == 1).sum())
     if actives[-1] <= 1:
         break
 
+    if writefile:
+        framedata[i, :, :] = flaket
+        framefile.flush()
+
+    if writeanimation:
+        videowriter.write(cv2.cvtColor(flakem, cv2.COLOR_GRAY2BGR))
+        
     if plot:
         im.set_data(flaket)
         activeline.set_data(np.arange(i+2), actives)
         plt.draw()
+
     if printstats:
         print 'i =', i
         print counts
@@ -139,4 +150,3 @@ if writefile:
 
 if plot:
     plt.show()
-
