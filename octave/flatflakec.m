@@ -193,60 +193,70 @@ for i=1:iter
     %flaket=flakem;
     
     disp('Start loop2')
-    bigcat_att = conv2(flakem, circle, 'same');
-    for j=3:msize-2
-        for k=3:nsize-2
-            neighbourhood = flakem(j-1:j+1, k-1:k+1);
-            if flakem(j,k)==1
-                % We have a graphite particle
-                if flaket(j,k)~=2
-                    reactc = opensum(j, k);
-                    react = min(1, 1-(1-reactivity)^reactc);
+    % Figure out which graphite particles will react
+    if ~cat
+        reactc = opensum;
+        react = min(1, 1-(1-reactivity).^reactc);
+        willreact = rand(msize, nsize) < react;
+        flaket(willreact) = 0;
+    else
+        bigcat_att = conv2(flakem, circle, 'same');
+        for j=3:msize-2
+            for k=3:nsize-2
+                neighbourhood = flakem(j-1:j+1, k-1:k+1);
+                if flakem(j,k)==1
+                    % We have a graphite particle
+                    if flaket(j,k)~=2
+                        reactc = opensum(j, k);
+                        react = min(1, 1-(1-reactivity)^reactc);
 
-                    if (rand<react) && (rem(i,normreact)==0)
+                        if (rand<react) && (rem(i,normreact)==0)
 
-                        may_reac = false;
-                        is_cat = false;
-                        % NOTE: We don't need to mask the center out here, as we know it is not 2
-                        [cposi, cposj] = find(neighbourhood == 2);
-                        for cati = 1:length(cposi)
-                            [joffset, koffset] = calcoffset(cposj, cposj, cati);
-                            is_cat = true;
-                            cat_att = bigcat_att(j+joffset, k+koffset);
-                            if cat_att > 1
-                                may_reac = true;
-                            elseif cat_att==1
-                                flaket(j+joffset, k+koffset) = 0;
-                                flaket(j, k) = 2;
-                                break
+                            may_reac = false;
+                            is_cat = false;
+                            % NOTE: We don't need to mask the center out here, as we know it is not 2
+                            if cat
+                                [cposi, cposj] = find(neighbourhood == 2);
+                                for cati = 1:length(cposi)
+                                    [joffset, koffset] = calcoffset(cposj, cposj, cati);
+                                    is_cat = true;
+                                    cat_att = bigcat_att(j+joffset, k+koffset);
+                                    if cat_att > 1
+                                        may_reac = true;
+                                    elseif cat_att==1
+                                        flaket(j+joffset, k+koffset) = 0;
+                                        flaket(j, k) = 2;
+                                        break
+                                    end
+                                end    
                             end
-                        end    
-
-                        if may_reac || ~is_cat
-                            flaket(j,k)=0;
+                            
+                            if may_reac || ~is_cat
+                                flaket(j,k)=0;
+                            end;
                         end;
                     end;
-                end;
-            elseif flakem(j,k)==2 % We have a catalyst particle
-                % Is it open?
-                catopen = any(neighbourhood(:) == 0);
+                elseif flakem(j,k)==2 % We have a catalyst particle
+                                      % Is it open?
+                    catopen = any(neighbourhood(:) == 0);
 
-                if catopen && (rand<catreac)
-                    % Move to a random location where there is carbon
-                    [possi, possj] = find(neighbourhood == 1);
-                    if length(possi) > 0
-                        choice = floor(rand*length(possi)) + 1;
-                        [joffset, koffset] = calcoffset(possi, possj, choice);
-                        flaket(j, k) = 0;
-                        flaket(j+joffset, k+koffset) = 2;
-                    end
+                    if catopen && (rand<catreac)
+                        % Move to a random location where there is carbon
+                        [possi, possj] = find(neighbourhood == 1);
+                        if length(possi) > 0
+                            choice = floor(rand*length(possi)) + 1;
+                            [joffset, koffset] = calcoffset(possi, possj, choice);
+                            flaket(j, k) = 0;
+                            flaket(j+joffset, k+koffset) = 2;
+                        end
+                    end;
                 end;
             end;
         end;
     end;
     disp('End loop2')
     
-    writeframe(filestem, i, 'dat', flaket);
+    %writeframe(filestem, i, 'dat', flaket);
     
     subcat=2*sum(sum(flakem==2)); %2*size(find(flakem==2),1);
     conv(i+1)=sum(sum(flaket))-subcat;
