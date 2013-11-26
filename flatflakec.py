@@ -90,8 +90,8 @@ if writeanimation:
 for i in xrange(maxiter):
     flakem = np.copy(flaket)
     
-    opensum = conv2d(flakem==0, opencross)
-    #opensum = sumcalcs.opencross(flakem==0)
+    #opensum = conv2d(flakem==0, opencross)
+    opensum = sumcalcs.opencross(flakem==0)
     graphite = flakem == 1
     counters = opensum * graphite
     counts,_ = np.histogram(counters, countvec)
