@@ -4,17 +4,33 @@
 # Rewritten in Python by Carl Sandrock Jan 2013
 
 import numpy as np
-import scipy.signal
-import sumcalcs
 
-def conv2d(in1, in2):
-    return scipy.signal.convolve2d(in1, in2, 'same')
+try:
+    # Fortran library for convolution
+    import sumcalcs
+    convopencross = sumcalcs.opencross
+    convcircle = sumcalcs.circle
 
-writefile = False
-plot = False
-catalyst = False
-printstats = False
-writeanimation = True
+except ImportError:
+    # use scipy convolution
+    import scipy.signal
+
+    def conv2d(in1, in2):
+        return scipy.signal.convolve2d(in1, in2, 'same')
+
+    def convopencross(image):
+        return conv2d(image, opencross)
+
+    def convcircle(image):
+        return conv2d(image, circle)
+
+# Change these options for visualisation
+
+writefile = False  # Write output to file
+plot = True  # Generate an onscreen plot
+catalyst = True  # Allow for catalyst
+printstats = False  # Print statistics as the run proceeds
+writeanimation = False  # Write animation to video file
 
 datatype = "uint8"
 
@@ -25,7 +41,7 @@ msize = 504
 nsize = msize
 
 normreac = 0.1
-catprob = 4.0/100 # Probability of catalyst 10000/(504*504) 
+catprob = 4.0/100 # Probability of catalyst 10000/(504*504)
 catreac = 1
 
 # Stencils
@@ -48,7 +64,7 @@ if catalyst:
     # Seed catalyst
     # Using 9 for the catalyst allows us to use only one convolution to find the sum of graphite particles and the number of catalyst neighbours
     randoms = np.random.rand(msize, nsize)
-    flakem[(randoms < catprob) & graphite] = 9 
+    flakem[(randoms < catprob) & graphite] = 9
 
 flaket = np.copy(flakem)
 
@@ -86,12 +102,11 @@ if writeanimation:
     videowriter = cv2.VideoWriter('frames.avi', cv.FOURCC(*'rle '), 24,
                                   (msize, nsize), True)
     print videowriter
-    
+
 for i in xrange(maxiter):
     flakem = np.copy(flaket)
-    
-    #opensum = conv2d(flakem==0, opencross)
-    opensum = sumcalcs.opencross(flakem==0)
+
+    opensum = convopencross(flakem==0)
     graphite = flakem == 1
     counters = opensum * graphite
     counts,_ = np.histogram(counters, countvec)
@@ -112,8 +127,7 @@ for i in xrange(maxiter):
     flaket[willreact & graphite] = 0
 
     if catalyst:
-        #closedsum = conv2d(flakem, circle)
-        closedsum = sumcalcs.circle(flakem)
+        closedsum = convcircle(flakem)
         catopen = (1 <= closedsum) & (closedsum <= 7) & (flakem == 9)
         for r, c in zip(*np.nonzero(catopen & (randoms < catreac))):
             if 1 < r < nsize and 1 < c < msize:
@@ -122,7 +136,7 @@ for i in xrange(maxiter):
                 roffset, coffset = zip(*np.nonzero(neighbourhood))[whichone]
                 flaket[r, c] = 0
                 flaket[r+roffset-1, c+coffset-1] = 9
-        
+
 
     actives.append((flaket == 1).sum())
     if actives[-1] <= 1:
@@ -134,7 +148,7 @@ for i in xrange(maxiter):
 
     if writeanimation:
         videowriter.write(cv2.cvtColor(flakem, cv2.COLOR_GRAY2BGR))
-        
+
     if plot:
         im.set_data(flaket)
         activeline.set_data(np.arange(i+2), actives)
