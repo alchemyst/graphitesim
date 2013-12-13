@@ -153,6 +153,7 @@ for i in xrange(maxiter):
         im.set_data(flaket)
         activeline.set_data(np.arange(i+2), actives)
         plt.draw()
+        plt.pause(0.0001)
 
     if printstats:
         print 'i =', i
