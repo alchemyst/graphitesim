@@ -2,6 +2,7 @@
 
 # Author: Heinrich Badenhorst 2012
 # Rewritten in Python by Carl Sandrock Jan 2013
+# 2014/01/01 HB About to add new features
 
 import numpy as np
 
