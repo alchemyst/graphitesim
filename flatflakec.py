@@ -4,6 +4,7 @@
 # Rewritten in Python by Carl Sandrock Jan 2013
 
 import numpy as np
+import time
 
 try:
     # Fortran library for convolution
@@ -153,6 +154,7 @@ for i in xrange(maxiter):
         im.set_data(flaket)
         activeline.set_data(np.arange(i+2), actives)
         plt.draw()
+        plt.pause(0.01)
 
     if printstats:
         print 'i =', i
@@ -164,3 +166,4 @@ if writefile:
 
 if plot:
     plt.show()
+    
