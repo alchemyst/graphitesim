@@ -55,9 +55,6 @@ circle[1, 1] = 0
 # Initialise shape
 flakem = np.zeros([msize, nsize], datatype)
 flakem[2:-2, 2:-2] = 1
-flakem[50, 50:450] = 0
-flakem[450, 50:450] = 0
-flakem[100:400, 250] = 0
 
 graphite = flakem == 1
 
