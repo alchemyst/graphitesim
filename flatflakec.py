@@ -54,7 +54,12 @@ circle[1, 1] = 0
 
 # Initialise shape
 flakem = np.zeros([msize, nsize], datatype)
-flakem[2:-2, 2:-2] = 1
+for xcoord in range(0,msize-1):
+    for ycoord in range(0,nsize-1):
+        radius = round(msize/2,0)
+        positionR = ((xcoord-radius)**2+(ycoord-radius)**2)**0.5
+        if positionR <= radius:
+            flakem[xcoord,ycoord] = 1
 
 graphite = flakem == 1
 
