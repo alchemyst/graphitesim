@@ -3,7 +3,9 @@
 # Author: Heinrich Badenhorst 2012
 # Rewritten in Python by Carl Sandrock Jan 2013
 
-# NOTE : The random seeding does not seem to be happening, repeat runs have identical graphs!
+# Issue list :
+#              The initial "actives" calculation for catalyst system is wrong, perfect for no cat
+#              Video creator not working
 
 import numpy as np
 import time
@@ -31,7 +33,7 @@ except ImportError:
 
 writefile = False  # Write output to file
 plot = True  # Generate an onscreen plot
-catalyst = True  # Allow for catalyst
+catalyst = False  # Allow for catalyst
 printstats = False  # Print statistics as the run proceeds
 writeanimation = False  # Write animation to video file
 
@@ -39,13 +41,14 @@ datatype = "uint8"
 
 np.random.seed(0)
 
-maxiter = 700 #4000
+maxiter = 1000 #4000
 msize = 504
 nsize = msize
 
-normreac = 0.1
+normreac = 0.1 # Cannot be higher than 0.25
 catprob = 4.0/100 # Probability of catalyst 10000/(504*504)
 catreac = 1
+scale_ideal = 1.62
 
 # Stencils
 opencross = np.array([[0, 1, 0],
@@ -79,6 +82,7 @@ actives = [graphite.sum()]
 total = []
 ASA = []
 ASAsc = []
+ideal = []
 problog = []
 allcounts = []
 xs = []
@@ -91,7 +95,8 @@ if plot:
     plt.subplot(2, 1, 1)
     im = plt.imshow(flakem)
     plt.subplot(2, 1, 2)
-    [activeline] = plt.plot(0, 1)
+    [activeline1] = plt.plot(0, 1)
+    [activeline2] = plt.plot(0, 1)
     plt.xlim(0, 1)
     plt.ylim(0, 2.5)
 
@@ -122,6 +127,7 @@ for i in xrange(maxiter):
     ASAsc.append(ASA[-1]/ASA[0])
     x = (actives[0] - actives[-1])/float(actives[0])
     xs.append(x)
+    ideal.append((1-x)**0.5*scale_ideal)
     reactivity=normreac
     problog.append(reactivity)
     allcounts.append(counts)
@@ -158,7 +164,8 @@ for i in xrange(maxiter):
 
     if plot:
         im.set_data(flaket)
-        activeline.set_data(xs, ASAsc)
+        activeline1.set_data(xs, ASAsc)
+        activeline2.set_data(xs, ideal)
         plt.draw()
         plt.pause(0.01)
 
