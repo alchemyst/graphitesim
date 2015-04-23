@@ -3,6 +3,8 @@
 # Author: Heinrich Badenhorst 2012
 # Rewritten in Python by Carl Sandrock Jan 2013
 
+# NOTE : The random seeding does not seem to be happening, repeat runs have identical graphs!
+
 import numpy as np
 import time
 
@@ -76,6 +78,7 @@ actives = [graphite.sum()]
 # Histories
 total = []
 ASA = []
+ASAsc = []
 problog = []
 allcounts = []
 xs = []
@@ -88,9 +91,9 @@ if plot:
     plt.subplot(2, 1, 1)
     im = plt.imshow(flakem)
     plt.subplot(2, 1, 2)
-    [activeline] = plt.plot(0, actives)
-    plt.xlim(0, maxiter)
-    plt.ylim(0, flakem.size)
+    [activeline] = plt.plot(0, 1)
+    plt.xlim(0, 1)
+    plt.ylim(0, 2.5)
 
 if writefile:
     import h5py
@@ -115,8 +118,9 @@ for i in xrange(maxiter):
     counts,_ = np.histogram(counters, countvec)
 
     total.append(counts.sum())
-    ASA.append((counts * countvec[1:5]).sum())
-    x = counts/total[-1]
+    ASA.append(float((counts * countvec[1:5]).sum()))
+    ASAsc.append(ASA[-1]/ASA[0])
+    x = (actives[0] - actives[-1])/float(actives[0])
     xs.append(x)
     reactivity=normreac
     problog.append(reactivity)
@@ -154,7 +158,7 @@ for i in xrange(maxiter):
 
     if plot:
         im.set_data(flaket)
-        activeline.set_data(np.arange(i+2), actives)
+        activeline.set_data(xs, ASAsc)
         plt.draw()
         plt.pause(0.01)
 
