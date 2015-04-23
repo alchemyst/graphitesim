@@ -129,7 +129,7 @@ for i in xrange(maxiter):
     randoms = np.random.rand(msize, nsize)
     # Figure out which graphite particles will react
     reactc = opensum
-    reactprob = np.minimum(1, 1 - (1 - reactivity)**reactc)
+    reactprob = np.minimum(1, reactivity**reactc)
     willreact = randoms < reactprob
     flaket[willreact & graphite] = 0
 
